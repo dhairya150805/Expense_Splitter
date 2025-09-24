@@ -1,34 +1,49 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import Auth from './components/Auth'
+import Dashboard from './components/Dashboard'
+import { clearToken, getToken, decodeJwtPayload } from './api'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [token, setTokenState] = useState(getToken())
+  const [userId, setUserId] = useState(() => {
+    const t = getToken()
+    const payload = t ? decodeJwtPayload(t) : null
+    return payload?.id || ''
+  })
+
+  const onAuthed = ({ token: t, userId: uid }) => {
+    setTokenState(t)
+    setUserId(uid || '')
+  }
+
+  const logout = () => {
+    clearToken()
+    setTokenState('')
+    setUserId('')
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="container">
+      <header className="header">
+        <h1>Expense Splitter</h1>
+        <nav className="nav">
+          {token && <button className="nav-btn" onClick={logout}>Logout</button>}
+        </nav>
+      </header>
+
+      <main className="main">
+        {!token ? (
+          <Auth onAuthed={onAuthed} />
+        ) : (
+          <Dashboard userId={userId} />
+        )}
+      </main>
+
+      <footer className="footer">
+        <small className="muted">Connected to backend at http://localhost:3000. Create group, add members, add expenses, and view settlement summary.</small>
+      </footer>
+    </div>
   )
 }
 
